@@ -1,0 +1,247 @@
+{% extends "base.html" %}
+{% set seite = 'projekt' %}
+{% block titel %}{{ p.projekt or 'Nachweis' }}{% endblock %}
+
+{% macro feld(name, label, breit=false) %}
+<label class="feld {% if breit %}breit{% endif %}">
+  <span>{{ label }}</span>
+  <input type="text" data-feld="{{ name }}" value="{{ p[name] or '' }}">
+</label>
+{% endmacro %}
+
+{% macro auswahl(name, label, optionen, leer=false) %}
+<label class="feld">
+  <span>{{ label }}</span>
+  <select data-feld="{{ name }}">
+    {% if leer %}<option value="">— bitte wählen —</option>{% endif %}
+    {% for o in optionen %}
+      <option value="{{ o }}" {% if p[name] == o %}selected{% endif %}>{{ o }}</option>
+    {% endfor %}
+  </select>
+</label>
+{% endmacro %}
+
+{% macro haken(name, label) %}
+<label class="haken">
+  <input type="checkbox" data-feld="{{ name }}" {% if p[name] %}checked{% endif %}>
+  <span>{{ label }}</span>
+</label>
+{% endmacro %}
+
+{% block inhalt %}
+<div class="editor" data-pid="{{ p.id }}">
+
+  <div class="seitenkopf">
+    <div>
+      <p class="augenbraue">Nachweis · DIN 4108-2:2013-02, Abschnitt 8.3</p>
+      <input class="titel-eingabe" type="text" data-feld="projekt"
+             value="{{ p.projekt }}" placeholder="Projektbezeichnung"
+             aria-label="Projektbezeichnung">
+      <p class="lead">Referenzraum: <span id="kopf-raum">{{ p.referenzraum or '—' }}</span></p>
+    </div>
+    <div class="kopf-aktionen">
+      <a class="knopf" href="{{ url_for('uebersicht') }}">Übersicht</a>
+      <a class="knopf primaer" href="{{ url_for('report', pid=p.id) }}">PDF-Report</a>
+    </div>
+  </div>
+
+  <div class="raster">
+    <div class="spalte-haupt">
+
+      <section class="karte">
+        <h2><span class="nr">1</span> Allgemeine Angaben</h2>
+        <div class="felder">
+          {{ feld('gebaeudebereich', 'Gebäudebereich') }}
+          {{ feld('referenzraum', 'Referenzraum') }}
+          {{ feld('datum', 'Datum') }}
+          {{ feld('buero', 'Büro / Firma') }}
+          {{ feld('ersteller', 'Ersteller') }}
+          {{ feld('foerderkennzeichen', 'Förder-/Vorhabenkennzeichen') }}
+          {{ feld('bauvorhaben_adresse', 'Bauvorhaben / Anschrift', true) }}
+        </div>
+      </section>
+
+      <section class="karte">
+        <h2><span class="nr">2</span> Randbedingungen</h2>
+        <div class="felder">
+          {{ auswahl('gebaeudetyp', 'Gebäudekategorie', din.GEBAEUDETYPEN) }}
+          {{ auswahl('klimaregion', 'Sommerklimaregion (DIN 4108-2, Bild 1)', din.KLIMAREGIONEN, true) }}
+          {{ auswahl('nachtlueftung', 'Nachtlüftung', din.NACHTLUEFTUNG) }}
+          {{ auswahl('bauart_methode', 'Bestimmung der Bauart', din.BAUART_METHODEN) }}
+        </div>
+
+        <div class="unterblock" data-zeigen-bei="nach DIN EN ISO 13786">
+          {{ auswahl('waermekapazitaet', 'Wirksame Wärmekapazität Cwirk / AG',
+                     din.WAERMEKAPAZITAET|map(attribute=0)|list, true) }}
+        </div>
+
+        <div class="unterblock" data-zeigen-bei="nach DIN 4108-2">
+          {{ auswahl('rohdichte', 'Flächenanteilig gemittelte Rohdichte der massiven Innen- und Außenbauteile', din.ROHDICHTEN, true) }}
+          <div class="haken-liste">
+            {% for schluessel, bez in din.BAUART_KRITERIEN %}
+              {{ haken(schluessel, bez) }}
+            {% endfor %}
+          </div>
+          <p class="hinweis">Die mittlere bzw. schwere Bauart wird nur angesetzt, wenn alle
+            vier Kriterien zutreffen. Andernfalls gilt die leichte Bauart.</p>
+        </div>
+
+        <div class="haken-liste rand-oben">
+          {{ haken('passive_kuehlung', 'Passive Kühlung vorhanden (S6 nach Tabelle 8 wird angesetzt)') }}
+          {{ haken('aktive_kuehlung', 'Anlage zur Kühlung vorhanden (wird dokumentiert, aber nach DIN 4108-2 nicht angerechnet)') }}
+          {{ haken('verzicht_822b', 'Verzicht auf den Nachweis nach Abschnitt 8.2.2 b) beansprucht') }}
+          {{ haken('glasvorbau_nur', 'Unbeheizter Glasvorbau: Belüftung nur über den Glasvorbau (8.2.3 I. a)') }}
+          {{ haken('glasvorbau_nicht_nur', 'Unbeheizter Glasvorbau: Belüftung nicht oder nicht nur über den Glasvorbau (8.2.3 II. a)') }}
+        </div>
+      </section>
+
+      <section class="karte">
+        <h2><span class="nr">3</span> Betrachteter Raum</h2>
+        <div class="felder drei">
+          <label class="feld">
+            <span>Lichte Raumhöhe LH [m]</span>
+            <input type="text" inputmode="decimal" data-feld="raumhoehe" value="{{ p.raumhoehe|de(2) }}">
+          </label>
+          <label class="feld">
+            <span>Lichte Raumtiefe LT [m]</span>
+            <input type="text" inputmode="decimal" data-feld="raumtiefe" value="{{ p.raumtiefe|de(2) }}">
+          </label>
+          <label class="feld">
+            <span>Lichte Raumbreite LB [m]</span>
+            <input type="text" inputmode="decimal" data-feld="raumbreite" value="{{ p.raumbreite|de(2) }}">
+          </label>
+        </div>
+        <label class="feld" style="max-width:340px;margin-top:12px">
+          <span>Nettogrundfläche AG direkt vorgeben [m²] — leer oder 0 = aus LT · LB</span>
+          <input type="text" inputmode="decimal" data-feld="ag_direkt" value="{{ p.ag_direkt|de(2) }}">
+        </label>
+        <p class="hinweis">Angesetzte Nettogrundfläche <strong>AG = <span data-wert="AG">—</span> m²</strong>.
+          Die lichte Raumtiefe sollte LT,max = 3 · LH nicht überschreiten.</p>
+      </section>
+
+      <section class="karte">
+        <div class="karte-kopf">
+          <h2><span class="nr">4</span> Fenster im betrachteten Raum</h2>
+          <button class="knopf klein primaer" id="fenster-hinzu" type="button">Fenster hinzufügen</button>
+        </div>
+
+        <div class="tabellen-huelle">
+          <table class="fenstertabelle" id="fenstertabelle">
+            <thead>
+              <tr>
+                <th>Nr.</th>
+                <th>Bezeichnung</th>
+                <th>Orientierung</th>
+                <th>Neigung</th>
+                <th class="r">Breite [m]</th>
+                <th class="r">Höhe [m]</th>
+                <th class="r">Anzahl</th>
+                <th class="r">AW,j direkt [m²]</th>
+                <th>Glastyp</th>
+                <th>Glaseigenschaft</th>
+                <th class="r">g⊥</th>
+                <th>Sonnenschutz</th>
+                <th class="r">FC</th>
+                <th class="r">versch.</th>
+                <th class="r">gtot</th>
+                <th class="r">AW,j [m²]</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="fensterkoerper"></tbody>
+            <tfoot>
+              <tr>
+                <td colspan="14" class="r stark">Summe aller Fensterflächen AW,ges</td>
+                <td class="r zahl" data-wert="summenprodukt">—</td>
+                <td class="r zahl stark" data-wert="AW_ges">—</td>
+                <td></td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+        <p class="hinweis" id="kein-fenster" {% if fenster %}hidden{% endif %}>
+          Noch kein Fenster erfasst. Erfassen Sie alle Fensterflächen des Raumes
+          mit dem lichten Rohbaumaß der Fensteröffnung.</p>
+        <p class="hinweis">AW,j direkt: Nur ausfüllen, wenn statt der Fenstermaße nur die
+          Gesamtfläche einer Fenstergruppe vorliegt — überschreibt dann Breite × Höhe × Anzahl
+          für dieses Fenster. Wenn möglich, tragen Sie stattdessen die tatsächlichen Maße ein.</p>
+      </section>
+
+      <section class="karte">
+        <h2><span class="nr">5</span> Annahmen und Kommentare</h2>
+        <label class="feld breit">
+          <span>Annahmen und sonstige Überlegungen zur Nachweisführung</span>
+          <textarea rows="4" data-feld="annahmen">{{ p.annahmen }}</textarea>
+        </label>
+        <label class="feld breit">
+          <span>Kommentare</span>
+          <textarea rows="3" data-feld="kommentare">{{ p.kommentare }}</textarea>
+        </label>
+      </section>
+
+    </div>
+
+    <aside class="spalte-neben">
+      <div class="ergebnis-karte" id="ergebnis">
+
+        <div class="plakette-gross" id="status-plakette">—</div>
+
+        <div class="waage" aria-hidden="true">
+          <div class="waage-kopf">
+            <span>Sonneneintragskennwert</span>
+            <span id="ausnutzung">—</span>
+          </div>
+          <div class="waage-bahn">
+            <div class="waage-fuellung" id="waage-fuellung"></div>
+            <div class="waage-marke"><span>S,zul</span></div>
+          </div>
+          <div class="waage-fuss">
+            <div><small>S,vorh</small><strong data-wert="S_vorh">—</strong></div>
+            <div class="r"><small>S,zul</small><strong data-wert="S_zul">—</strong></div>
+          </div>
+        </div>
+
+        <table class="kennwerte">
+          <tbody id="kennwerte-koerper"></tbody>
+        </table>
+
+        <table class="kennwerte">
+          <tbody>
+            <tr><th>Ermittelte Bauart</th><td class="r" id="bauart">—</td></tr>
+            <tr><th>fWG</th><td class="r zahl"><span data-wert="fWG">—</span> %</td></tr>
+            <tr><th>fWG,zul (Tabelle 6)</th><td class="r zahl"><span data-wert="fWG_zul">—</span> %</td></tr>
+            <tr><th>fneig</th><td class="r zahl" data-wert="fneig">—</td></tr>
+            <tr><th>fnord</th><td class="r zahl" data-wert="fnord">—</td></tr>
+            <tr><th>AG</th><td class="r zahl"><span data-wert="AG">—</span> m²</td></tr>
+            <tr><th>AW,ges</th><td class="r zahl"><span data-wert="AW_ges">—</span> m²</td></tr>
+            <tr><th>Σ (AW,j · gtot,j)</th><td class="r zahl"><span data-wert="summenprodukt">—</span> m²</td></tr>
+          </tbody>
+        </table>
+
+        <div id="meldungen"></div>
+
+        <a class="knopf primaer breit-knopf" href="{{ url_for('report', pid=p.id) }}">PDF-Report herunterladen</a>
+        <p class="speicherstand" id="speicherstand">Alle Eingaben werden sofort gespeichert.</p>
+      </div>
+    </aside>
+  </div>
+</div>
+{% endblock %}
+
+{% block skript %}
+<script>
+  window.NSW = {
+    pid: {{ p.id }},
+    fc: {{ fc_json|tojson }},
+    glas: {{ g_json|tojson }},
+    ergebnis: {{ erg|tojson }},
+    fenster: {{ fenster|tojson }},
+    orientierungen: {{ din.ORIENTIERUNGEN|tojson }},
+    neigungen: {{ din.NEIGUNGEN|tojson }},
+    glastypen: {{ din.GLASTYPEN|tojson }},
+    sonnenschutz: {{ din.SONNENSCHUTZ_FC|map(attribute=0)|list|tojson }},
+    maxFenster: {{ max_fenster }}
+  };
+</script>
+<script src="{{ url_for('static', filename='js/app.js') }}"></script>
+{% endblock %}

@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+{% set seite = 'grundlagen' %}
+{% block titel %}Rechengrundlagen{% endblock %}
+
+{% block inhalt %}
+<div class="seitenkopf">
+  <div>
+    <p class="augenbraue">Hinterlegte Werte</p>
+    <h1>Rechengrundlagen</h1>
+    <p class="lead">Alle Zahlenwerte stammen aus DIN 4108-2:2013-02. Diese Seite zeigt,
+      womit die Anwendung rechnet — damit jeder Wert im Report nachvollziehbar bleibt.</p>
+  </div>
+</div>
+
+<section class="karte">
+  <h2>Nachweisgleichungen</h2>
+  <table class="liste">
+    <tbody>
+      <tr><th>Anforderung</th><td>S,vorh ≤ S,zul</td></tr>
+      <tr><th>S,vorh</th><td>Σ (AW,j · gtot,j) / AG mit gtot,j = g⊥,j · FC,j</td></tr>
+      <tr><th>S,zul</th><td>S1 + S2 + S3 + S4 + S5 + S6</td></tr>
+      <tr><th>AG</th><td>LT · LB (lichte Raumtiefe · lichte Raumbreite)</td></tr>
+      <tr><th>fWG</th><td>100 · AW,ges / AG [%]</td></tr>
+      <tr><th>fneig</th><td>ΣAW,neig≤60 / AW,ges</td></tr>
+      <tr><th>fnord</th><td>(ΣAW,nord + ΣAW,no.nw + ΣAW,verschattet) / AW,ges</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section class="karte">
+  <h2>Tabelle 6 — Zulässiger grundflächenbezogener Fensterflächenanteil</h2>
+  <p class="hinweis">Unterhalb dieser Werte kann auf einen Nachweis verzichtet werden.
+    Sind mehrere Fälle vorhanden, ist der kleinere Grenzwert maßgebend.</p>
+  <table class="liste">
+    <thead><tr><th>Neigung gegenüber der Horizontalen</th><th>Orientierung</th><th class="r">fWG [%]</th></tr></thead>
+    <tbody>
+      {% for neigung, orientierung, wert in din.TABELLE_6 %}
+      <tr><td>{{ neigung }}</td><td>{{ orientierung }}</td><td class="r zahl">{{ wert }}</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+
+<section class="karte">
+  <h2>Tabelle 7 — Abminderungsfaktoren FC</h2>
+  <table class="liste">
+    <thead>
+      <tr>
+        <th>Sonnenschutzvorrichtung</th>
+        <th class="r">Sonnenschutzglas g ≤ 0,40</th>
+        <th class="r">dreifach g &gt; 0,40</th>
+        <th class="r">zweifach g &gt; 0,40</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for name, ssg, drei, zwei in din.SONNENSCHUTZ_FC %}
+        {% if ssg is not none %}
+        <tr>
+          <td>{{ name }}</td>
+          <td class="r zahl">{{ ssg|de(2) }}</td>
+          <td class="r zahl">{{ drei|de(2) }}</td>
+          <td class="r zahl">{{ zwei|de(2) }}</td>
+        </tr>
+        {% endif %}
+      {% endfor %}
+    </tbody>
+  </table>
+  <p class="hinweis">Die Sonnenschutzvorrichtung muss fest installiert sein.
+    Übliche dekorative Vorhänge gelten nicht als Sonnenschutzvorrichtung.</p>
+</section>
+
+<section class="karte">
+  <h2>Tabelle 8 — Anteiliger Sonneneintragskennwert S1 (Nachtlüftung und Bauart)</h2>
+  {% for typ in din.GEBAEUDETYPEN %}
+  <h3>{{ typ }}</h3>
+  <table class="liste">
+    <thead>
+      <tr><th>Nachtlüftung</th><th>Bauart</th>
+        {% for region in din.KLIMAREGIONEN %}<th class="r">{{ region }}</th>{% endfor %}
+      </tr>
+    </thead>
+    <tbody>
+      {% for lueftung in din.NACHTLUEFTUNG %}
+        {% for bauart in din.BAUARTEN %}
+        <tr>
+          <td>{% if loop.first %}{{ lueftung }}{% endif %}</td>
+          <td>{{ bauart }}</td>
+          {% for wert in din.S1_TABELLE[typ][lueftung][bauart] %}
+            <td class="r zahl">{{ wert|de(3) }}</td>
+          {% endfor %}
+        </tr>
+        {% endfor %}
+      {% endfor %}
+    </tbody>
+  </table>
+  {% endfor %}
+</section>
+
+<section class="karte">
+  <h2>Tabelle 8 — Anteilige Sonneneintragskennwerte S2 bis S6</h2>
+  <table class="liste">
+    <thead><tr><th>Kennwert</th><th>Berechnung</th></tr></thead>
+    <tbody>
+      <tr><th>S2</th><td>Wohngebäude: 0,060 − 0,231 · fWG · Nichtwohngebäude: 0,030 − 0,115 · fWG (fWG als Verhältnis)</td></tr>
+      <tr><th>S3</th><td>0,03 · (AW,gtot≤0,4 / AW,ges)</td></tr>
+      <tr><th>S4</th><td>−0,035 · fneig</td></tr>
+      <tr><th>S5</th><td>0,10 · fnord</td></tr>
+      <tr><th>S6</th><td>bei passiver Kühlung: leichte Bauart 0,02 · mittlere Bauart 0,04 · schwere Bauart 0,06</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section class="karte">
+  <h2>Verglasungskatalog — g-Werte bei senkrechtem Strahlungseinfall</h2>
+  {% for typ, eintraege in din.GLASEIGENSCHAFTEN.items() %}
+  <h3>{{ typ }}</h3>
+  <table class="liste">
+    <thead><tr><th>Glaseigenschaft</th><th class="r">g⊥</th></tr></thead>
+    <tbody>
+      {% for name, wert in eintraege %}
+        {% if wert is not none %}
+        <tr><td>{{ name }}</td><td class="r zahl">{{ wert|de(2) }}</td></tr>
+        {% endif %}
+      {% endfor %}
+    </tbody>
+  </table>
+  {% endfor %}
+</section>
+{% endblock %}

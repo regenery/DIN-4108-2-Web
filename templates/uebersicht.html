@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% set seite = 'uebersicht' %}
+{% block titel %}Nachweise{% endblock %}
+
+{% block inhalt %}
+<div class="seitenkopf">
+  <div>
+    <p class="augenbraue">Nachweisverwaltung</p>
+    <h1>Nachweise sommerlicher Wärmeschutz</h1>
+    <p class="lead">Vereinfachtes Verfahren über Sonneneintragskennwerte. Jeder Nachweis
+      gilt für einen Referenzraum und liefert einen prüffähigen PDF-Report.</p>
+  </div>
+  <form method="post" action="{{ url_for('projekt_neu') }}" class="neu-form">
+    <input type="text" name="projekt" placeholder="Projektbezeichnung" aria-label="Projektbezeichnung">
+    <button class="knopf primaer" type="submit">Nachweis anlegen</button>
+  </form>
+</div>
+
+{% if projekte %}
+<div class="karte">
+  <table class="liste">
+    <thead>
+      <tr>
+        <th>Projekt</th>
+        <th>Referenzraum</th>
+        <th class="r">Fenster</th>
+        <th class="r">S,vorh</th>
+        <th class="r">S,zul</th>
+        <th>Ergebnis</th>
+        <th class="r">Aktionen</th>
+      </tr>
+    </thead>
+    <tbody>
+    {% for p in projekte %}
+      <tr>
+        <td>
+          <a class="stark" href="{{ url_for('projekt', pid=p.id) }}">{{ p.projekt or 'Ohne Bezeichnung' }}</a>
+          <span class="unter">{{ p.gebaeudebereich or p.gebaeudetyp }} · {{ p.datum }}</span>
+        </td>
+        <td>{{ p.referenzraum or '—' }}</td>
+        <td class="r zahl">{{ p.fensteranzahl }}</td>
+        <td class="r zahl">{% if p.s_vorh is not none %}{{ p.s_vorh|de(4) }}{% else %}—{% endif %}</td>
+        <td class="r zahl">{% if p.s_zul is not none %}{{ p.s_zul|de(4) }}{% else %}—{% endif %}</td>
+        <td><span class="plakette {{ p.status }}">{{ p.ueberschrift }}</span></td>
+        <td class="r nowrap">
+          <a class="knopf klein" href="{{ url_for('report', pid=p.id) }}">PDF</a>
+          <form method="post" action="{{ url_for('projekt_kopieren', pid=p.id) }}" class="inline">
+            <button class="knopf klein" type="submit">Kopieren</button>
+          </form>
+          <form method="post" action="{{ url_for('projekt_loeschen', pid=p.id) }}" class="inline"
+                onsubmit="return confirm('Nachweis „{{ p.projekt }}“ endgültig löschen?')">
+            <button class="knopf klein gefahr" type="submit">Löschen</button>
+          </form>
+        </td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<div class="karte leer">
+  <h2>Noch kein Nachweis angelegt</h2>
+  <p>Legen Sie oben einen Nachweis an. Anschließend erfassen Sie Randbedingungen,
+     Raumgeometrie und Fenster; Kennwerte und Ergebnis werden fortlaufend berechnet.</p>
+</div>
+{% endif %}
+{% endblock %}

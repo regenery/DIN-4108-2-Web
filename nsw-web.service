@@ -1,0 +1,17 @@
+# /etc/systemd/system/nsw-web.service
+[Unit]
+Description=NSW-Web - Nachweis sommerlicher Waermeschutz (DIN 4108-2)
+After=network-online.target
+
+[Service]
+Type=simple
+User=jonathan
+WorkingDirectory=/opt/nsw-web
+Environment=NSW_PORT=8080
+Environment=NSW_DB=/opt/nsw-web/nsw.db
+ExecStart=/usr/bin/python3 /opt/nsw-web/main.py
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

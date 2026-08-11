@@ -1,0 +1,20 @@
+# Datenbank
+*.db
+*.sqlite
+*.sqlite3
+nsw.db
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+.venv/
+venv/
+env/
+
+# OS / Editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

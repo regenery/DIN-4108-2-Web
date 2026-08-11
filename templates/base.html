@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block titel %}NSW-Web{% endblock %} · Sommerlicher Wärmeschutz</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><circle cx='16' cy='16' r='7' fill='%230f5f80'/></svg>">
+</head>
+<body>
+
+<header class="kopf">
+  <div class="huelle kopf-inhalt">
+    <a class="marke" href="{{ url_for('uebersicht') }}">
+      <svg class="marke-zeichen" viewBox="0 0 32 32" aria-hidden="true">
+        <circle cx="16" cy="16" r="6.5"/>
+        <g class="strahlen">
+          <path d="M16 1.5v4M16 26.5v4M1.5 16h4M26.5 16h4M5.7 5.7l2.9 2.9M23.4 23.4l2.9 2.9M26.3 5.7l-2.9 2.9M8.6 23.4l-2.9 2.9"/>
+        </g>
+      </svg>
+      <span class="marke-text">
+        <strong>NSW-Web</strong>
+        <small>Sommerlicher Wärmeschutz · DIN 4108-2</small>
+      </span>
+    </a>
+    <nav class="kopf-nav">
+      <a href="{{ url_for('uebersicht') }}" {% if seite == 'uebersicht' %}class="aktiv"{% endif %}>Nachweise</a>
+      <a href="{{ url_for('grundlagen') }}" {% if seite == 'grundlagen' %}class="aktiv"{% endif %}>Rechengrundlagen</a>
+    </nav>
+  </div>
+</header>
+
+<main class="huelle">
+  {% block inhalt %}{% endblock %}
+</main>
+
+<footer class="fuss">
+  <div class="huelle">
+    Verfahren der Sonneneintragskennwerte nach DIN 4108-2:2013-02, Abschnitt 8.3.
+    Maßgebend ist der Wortlaut der Norm.
+  </div>
+</footer>
+
+{% block skript %}{% endblock %}
+</body>
+</html>
