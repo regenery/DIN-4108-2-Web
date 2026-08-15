@@ -7,7 +7,6 @@ nach DIN 4108-2:2013-02 — prüffähig aufbereitet (u. a. für BAFA-Förderantr
 import glob
 import io
 import os
-from datetime import datetime
 
 from reportlab.lib import colors
 from reportlab.lib.enums import TA_LEFT, TA_RIGHT
@@ -403,17 +402,22 @@ def erzeuge_pdf(projekt, fenster, erg):
 
     # --- 2 Referenzraum ------------------------------------------------
     e.append(abschnitt("Betrachteter Raum bzw. Raumbereich"))
+    raumzeilen = []
+    if w.get("LH", 0) > 0:
+        raumzeilen.append([p("Lichte Raumhöhe", S_ZELLE), p("LH", S_ZELLE),
+                           p(de(w.get("LH")), S_ZELLE), p("m", S_ZELLE)])
+    if w.get("LT", 0) > 0:
+        raumzeilen.append([p("Lichte Raumtiefe (LT,max ≤ 3 · LH)", S_ZELLE),
+                           p("LT", S_ZELLE), p(de(w.get("LT")), S_ZELLE),
+                           p("m", S_ZELLE)])
+    if w.get("LB", 0) > 0:
+        raumzeilen.append([p("Lichte Raumbreite", S_ZELLE), p("LB", S_ZELLE),
+                           p(de(w.get("LB")), S_ZELLE), p("m", S_ZELLE)])
+    raumzeilen.append([p("Nettogrundfläche (" + str(w.get("AG_herkunft", "AG = LT · LB"))
+                        + ")", S_ZELLE_B), p("AG", S_ZELLE_B),
+                       p(de(w.get("AG")), S_ZELLE_B), p("m²", S_ZELLE_B)])
     e.append(kopftabelle(
-        ["Größe", "Kurzzeichen", "Wert", "Einheit"],
-        [[p("Lichte Raumhöhe", S_ZELLE), p("LH", S_ZELLE),
-          p(de(w.get("LH")), S_ZELLE), p("m", S_ZELLE)],
-         [p("Lichte Raumtiefe (LT,max ≤ 3 · LH)", S_ZELLE), p("LT", S_ZELLE),
-          p(de(w.get("LT")), S_ZELLE), p("m", S_ZELLE)],
-         [p("Lichte Raumbreite", S_ZELLE), p("LB", S_ZELLE),
-          p(de(w.get("LB")), S_ZELLE), p("m", S_ZELLE)],
-         [p("Nettogrundfläche (" + str(w.get("AG_herkunft", "AG = LT · LB"))
-            + ")", S_ZELLE_B), p("AG", S_ZELLE_B),
-          p(de(w.get("AG")), S_ZELLE_B), p("m²", S_ZELLE_B)]],
+        ["Größe", "Kurzzeichen", "Wert", "Einheit"], raumzeilen,
         [NUTZBREITE - 76 * mm, 26 * mm, 26 * mm, 24 * mm],
         ausrichtung_rechts=(2,)))
 
@@ -428,8 +432,8 @@ def erzeuge_pdf(projekt, fenster, erg):
             p(f.nr, S_MINI), p(f.bezeichnung, S_MINI),
             p(f.orientierung, S_MINI),
             p("0°–60°" if f.ist_geneigt else "60°–90°", S_MINI),
-            p(de(f.breite) if not direkt else "—", S_MINI),
-            p(de(f.hoehe) if not direkt else "—", S_MINI),
+            p(de(f.breite) if not direkt and f.breite > 0 else "—", S_MINI),
+            p(de(f.hoehe) if not direkt and f.hoehe > 0 else "—", S_MINI),
             p(f.anzahl, S_MINI), p(f.glastyp, S_MINI),
             p(de(f.g_wert, 2), S_MINI), p(de(f.fc, 2), S_MINI),
             p(de(f.gtot, 3), S_MINI),
@@ -621,14 +625,6 @@ def erzeuge_pdf(projekt, fenster, erg):
         ("TOPPADDING", (0, 1), (-1, 1), 2)]))
     e.append(Spacer(1, 14))
     e.append(KeepTogether([abschnitt("Bestätigung"), unterschrift]))
-
-    e.append(Spacer(1, 8))
-    e.append(p(
-        f"Erstellt am {datetime.now():%d.%m.%Y um %H:%M} Uhr mit NSW-Web — "
-        f"eigenständige Umsetzung des Verfahrens der Sonneneintragskennwerte "
-        f"nach DIN 4108-2:2013-02. Maßgebend ist der Wortlaut der Norm; die "
-        f"fachliche Verantwortung für Eingabewerte und Ergebnis liegt beim "
-        f"Ersteller.", S_KLEIN))
 
     doc.build(e)
     puffer.seek(0)
