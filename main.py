@@ -20,6 +20,7 @@ from report import erzeuge_pdf
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DB_PFAD = os.environ.get("NSW_DB", os.path.join(BASE_DIR, "nsw.db"))
 PORT = int(os.environ.get("NSW_PORT", 8080))
+HOST = os.environ.get("NSW_HOST", "0.0.0.0")
 
 app = Flask(__name__)
 app.jinja_env.filters["de"] = lambda wert, nk=2: de(wert, nk)
@@ -417,4 +418,4 @@ def healthz():
 
 if __name__ == "__main__":
     init_db()
-    app.run(host="0.0.0.0", port=PORT, debug=False)
+    app.run(host=HOST, port=PORT, debug=False)
