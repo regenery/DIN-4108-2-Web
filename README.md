@@ -9,18 +9,19 @@ Python-Anwendung mit SQLite-Persistenz und prüffähigem PDF-Report.
 
 ```bash
 pip install -r requirements.txt
-python3 main.py                    # → http://0.0.0.0:8080
+python3 main.py                    # → http://127.0.0.1:20003
 ```
 
-Umgebungsvariablen: `NSW_PORT` (Standard 8080), `NSW_DB` (Standard `./nsw.db`).
+Umgebungsvariablen: `NSW_HOST` (Standard 127.0.0.1), `NSW_PORT` (Standard 20003),
+`NSW_DB` (Standard `$RUBUS_DATEN/db/nsw.db`, ohne `RUBUS_DATEN` `./nsw.db`).
 Die Datenbank wird beim ersten Start automatisch angelegt.
 
-Für den Dauerbetrieb hinter dem Tailnet:
+## Betrieb in Rubus
 
-```bash
-pip install gunicorn
-gunicorn -w 2 -b 0.0.0.0:8080 'main:app'
-```
+Projekt `din-4108-2-web`, Dienst `rubus-nsw-web.service` auf `127.0.0.1:20003`
+(Health-Check `/healthz`), nur Umgebung prod auf homeserver. Die Datenbank liegt
+unter `/opt/rubus/din-4108-2-web/data/db/nsw.db`. In Rubus als Anzeige
+„NSW-Web“ mit `durchreichen = true` (Formulare und Inline-Skripte unverändert).
 
 `/healthz` liefert JSON mit Status und Projektanzahl — für das zentrale
 Überwachungs-Dashboard.

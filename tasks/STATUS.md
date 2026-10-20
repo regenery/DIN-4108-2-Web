@@ -30,6 +30,17 @@ Punkt 4 vor Punkt 1: Testfälle aus dem Originalwerkzeug `NSW2013-V2_80-Tool.xls
 als Vergleichsdaten anlegen, solange niemand an den Formeln arbeitet. Danach ist
 Punkt 1 eine Änderung von drei Zeilen mit Absicherung.
 
+## Umzug in Rubus, 2026-10-20 (Teil B im Workspace)
+
+Erledigt: `rubus.toml` (Dienst `nsw-web` auf `127.0.0.1:20003`, Health
+`/healthz`, `[daten] verzeichnisse = ["db"]`, Anzeige `dashboard` mit
+`durchreichen`, nur prod auf homeserver), `requirements.txt` exakt gepinnt
+(10 Pakete, `pip check` mit `--no-deps` sauber), Datenbankpfad über
+`RUBUS_DATEN` mit Rückfall, Vorgabe `127.0.0.1:20003` (damit Punkt 1 im Code
+und README erledigt). Start- und Seitentest in Test-venv bestanden.
+Offen für Teil A: `nsw.db` nach `/opt/rubus/din-4108-2-web/data/db/nsw.db`
+kopieren, prod einrichten, umschalten. Punkte 2 bis 5 oben bleiben offen.
+
 ## Nachtrag 2026-09-13: geänderte Betriebsregeln
 
 Der Neustart produktiver Dienste und `git push` sind seit dem 2026-09-13 erlaubt.

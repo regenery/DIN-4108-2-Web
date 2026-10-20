@@ -3,7 +3,7 @@
 NSW-Web — Nachweis sommerlicher Wärmeschutz nach DIN 4108-2:2013-02
 Flask-Anwendung, SQLite-Persistenz, PDF-Projektreport.
 
-Start:  python3 main.py      →  http://0.0.0.0:8080
+Start:  python3 main.py      →  http://127.0.0.1:20003
 """
 
 import os
@@ -18,9 +18,22 @@ from din4108 import Fenster, berechne, de
 from report import erzeuge_pdf
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DB_PFAD = os.environ.get("NSW_DB", os.path.join(BASE_DIR, "nsw.db"))
-PORT = int(os.environ.get("NSW_PORT", 8080))
-HOST = os.environ.get("NSW_HOST", "0.0.0.0")
+
+
+def _db_pfad():
+    """NSW_DB vor RUBUS_DATEN/db/nsw.db vor nsw.db neben dem Code."""
+    if os.environ.get("NSW_DB"):
+        return os.environ["NSW_DB"]
+    if os.environ.get("RUBUS_DATEN"):
+        ordner = os.path.join(os.environ["RUBUS_DATEN"], "db")
+        os.makedirs(ordner, exist_ok=True)
+        return os.path.join(ordner, "nsw.db")
+    return os.path.join(BASE_DIR, "nsw.db")
+
+
+DB_PFAD = _db_pfad()
+PORT = int(os.environ.get("NSW_PORT", 20003))
+HOST = os.environ.get("NSW_HOST", "127.0.0.1")
 
 app = Flask(__name__)
 app.jinja_env.filters["de"] = lambda wert, nk=2: de(wert, nk)

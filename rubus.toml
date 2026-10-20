@@ -1,0 +1,31 @@
+[projekt]
+name = "din-4108-2-web"
+beschreibung = "NSW-Web: Nachweis sommerlicher Wärmeschutz nach DIN 4108-2 mit PDF-Report"
+python = "3.12"
+abhaengigkeiten = "requirements.txt"
+neustart_bei = ["*.py", "requirements.txt", "templates/*", "static/*"]
+
+[[dienste]]
+name = "nsw-web"                      # Unit rubus-nsw-web.service
+befehl = "main.py"                    # Vorgabe 127.0.0.1:20003 aus main.py
+neustart = "always"
+port = 20003
+health = { http = "http://127.0.0.1:20003/healthz", erwartet = 200 }
+
+[daten]
+verzeichnisse = ["db"]                # $RUBUS_DATEN/db/nsw.db
+
+[[anzeigen]]
+name = "dashboard"
+titel = "NSW-Web"
+dienst = "nsw-web"
+port = 20003
+durchreichen = true
+seiten = [
+  { titel = "Nachweise", pfad = "/" },
+  { titel = "Rechengrundlagen", pfad = "/grundlagen" },
+]
+
+[umgebungen.prod]
+stufe = "prod"
+host = "homeserver"
